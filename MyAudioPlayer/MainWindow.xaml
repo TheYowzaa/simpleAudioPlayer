@@ -25,18 +25,20 @@
            Text="No folder selected" 
            Margin="0,5" FontWeight="Bold" TextWrapping="Wrap" />
         </Menu>
-
+        
         <!-- Player Controls -->
         <StackPanel Orientation="Horizontal" Margin="0,5" Grid.Row="1">
             <Button x:Name="PlayPauseButton" Content="Play" Width="70" Margin="5,0" Click="PlayPause_Click"/>
             <Button Content="Previous" Width="70" Margin="5,0" Click="Previous_Click"/>
             <Button Content="Next" Width="70" Margin="5,0" Click="Next_Click"/>
         </StackPanel>
+        
 
+        <!-- Playback Slider -->
+        <Slider x:Name="PlaybackSlider" Grid.Row="2"
+        Minimum="0"
+        ValueChanged="PlaybackSlider_ValueChanged" />
 
-        <!-- Volume Slider -->
-        <Slider x:Name="VolumeSlider" Minimum="0" Maximum="1" Value="0.5"
-                Grid.Row="2" ValueChanged="VolumeSlider_ValueChanged"/>
 
         <!-- Now Playing display -->
         <TextBlock x:Name="NowPlayingTextBlock" Grid.Row="3" Margin="0,5" FontWeight="Bold" TextWrapping="Wrap" Text="Now Playing: None"/>
