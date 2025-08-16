@@ -19,6 +19,9 @@ namespace MyAudioPlayer
         private bool shuffleEnabled = false;
         private Random random = new Random();
 
+        // Shuffle queue to prevent repeats
+        private List<int> shuffleQueue = new List<int>();
+
         private DispatcherTimer positionTimer;
         private bool isDraggingSlider = false;
 
@@ -75,8 +78,7 @@ namespace MyAudioPlayer
 
             playlist.AddRange(files);
 
-            if (shuffleEnabled)
-                ShufflePlaylistPreserveCurrent();
+            InitializeShuffleQueue();
 
             if (playlist.Count > 0)
             {
@@ -91,15 +93,15 @@ namespace MyAudioPlayer
             }
         }
 
-        private void ShufflePlaylistPreserveCurrent()
+        private void InitializeShuffleQueue()
         {
-            if (playlist.Count == 0) return;
+            shuffleQueue.Clear();
+            for (int i = 0; i < playlist.Count; i++)
+                shuffleQueue.Add(i);
 
-            string currentTrack = playlist.ElementAtOrDefault(currentIndex);
-            playlist = playlist.OrderBy(x => random.Next()).ToList();
-
-            if (!string.IsNullOrEmpty(currentTrack))
-                currentIndex = playlist.IndexOf(currentTrack);
+            // Remove current track from the queue to avoid immediate repeat
+            if (playlist.Count > 0)
+                shuffleQueue.Remove(currentIndex);
         }
 
         private void PlayCurrentTrack()
@@ -139,7 +141,20 @@ namespace MyAudioPlayer
         {
             if (playlist.Count == 0) return;
 
-            currentIndex = (currentIndex + 1) % playlist.Count;
+            if (shuffleEnabled)
+            {
+                if (shuffleQueue.Count == 0)
+                    InitializeShuffleQueue(); // Refill the queue when empty
+
+                int randomIndex = random.Next(shuffleQueue.Count);
+                currentIndex = shuffleQueue[randomIndex];
+                shuffleQueue.RemoveAt(randomIndex); // Remove to avoid repeat
+            }
+            else
+            {
+                currentIndex = (currentIndex + 1) % playlist.Count;
+            }
+
             PlayCurrentTrack();
         }
 
@@ -147,9 +162,22 @@ namespace MyAudioPlayer
         {
             if (playlist.Count == 0) return;
 
-            currentIndex--;
-            if (currentIndex < 0)
-                currentIndex = playlist.Count - 1;
+            if (shuffleEnabled)
+            {
+                // For simplicity, just pick another random track
+                if (shuffleQueue.Count == 0)
+                    InitializeShuffleQueue();
+
+                int randomIndex = random.Next(shuffleQueue.Count);
+                currentIndex = shuffleQueue[randomIndex];
+                shuffleQueue.RemoveAt(randomIndex);
+            }
+            else
+            {
+                currentIndex--;
+                if (currentIndex < 0)
+                    currentIndex = playlist.Count - 1;
+            }
 
             PlayCurrentTrack();
         }
@@ -218,23 +246,12 @@ namespace MyAudioPlayer
         private void Shuffle_Checked(object sender, RoutedEventArgs e)
         {
             shuffleEnabled = true;
-            if (playlist.Count > 0)
-            {
-                ShufflePlaylistPreserveCurrent();
-                PlayCurrentTrack();
-            }
+            InitializeShuffleQueue();
         }
 
         private void Shuffle_Unchecked(object sender, RoutedEventArgs e)
         {
             shuffleEnabled = false;
-            if (playlist.Count > 0)
-            {
-                string currentTrack = playlist[currentIndex];
-                playlist = playlist.OrderBy(f => f).ToList();
-                currentIndex = playlist.IndexOf(currentTrack);
-                PlayCurrentTrack();
-            }
         }
     }
 }
